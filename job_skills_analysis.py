@@ -6,9 +6,7 @@ import json
 import re
 
 
-# ===========================================
-# SKILL DICTIONARY (REGEX PATTERNS)
-# ===========================================
+
 SKILLS = {
     "python": r"\bpython\b",
     "r": r"\br\b",
@@ -114,9 +112,7 @@ SKILLS = {
 MIN_OCCURRENCES = 10
 
 
-# ===========================================
-# DATA LOADING FUNCTIONS
-# ===========================================
+
 
 def load_data_one():
     df = pd.read_csv("data_jobs.csv")
@@ -158,9 +154,7 @@ def load_data_three():
     return df[["job_posted_date", "year_month", "job_skills"]]
 
 
-# ===========================================
-# SKILL COUNTING
-# ===========================================
+
 
 def compute_skill_counts(df):
     jobs_per_period = df["year_month"].value_counts().sort_index()
@@ -178,9 +172,6 @@ def compute_skill_counts(df):
     return skill_counts, jobs_per_period, periods
 
 
-# ===========================================
-# TREND MODELING
-# ===========================================
 
 def fit_trends(skill_counts, jobs_per_period, periods):
     total_counts = Counter()
@@ -210,12 +201,9 @@ def fit_trends(skill_counts, jobs_per_period, periods):
     return pd.DataFrame(trends).sort_values("slope", ascending=False).reset_index(drop=True)
 
 
-# ===========================================
-# REQUIRED PLOTS
-# ===========================================
 
 def plot_trends(trend_df):
-    # Top Growing Skills
+ 
     inc = trend_df[trend_df["slope"] > 0].nlargest(10, "slope")
     plt.figure(figsize=(8, 6))
     plt.barh(inc["skill"], inc["slope"], color="green")
@@ -225,7 +213,6 @@ def plot_trends(trend_df):
     plt.savefig("increasing_skill_trends.png")
     plt.close()
 
-    # Top Declining Skills
     dec = trend_df[trend_df["slope"] < 0].nsmallest(10, "slope")
     plt.figure(figsize=(8, 6))
     plt.barh(dec["skill"], dec["slope"], color="red")
@@ -255,11 +242,11 @@ def plot_frequency_scatter(trend_df):
 
     plt.scatter(x, y, alpha=0.7)
 
-    # Add labels for each skill
+   
     for _, row in trend_df.iterrows():
         plt.text(
-            row["slope"] + 0.02,      # slight right shift
-            row["avg_frequency"] + 0.02,  # slight up shift
+            row["slope"] + 0.02,      
+            row["avg_frequency"] + 0.02,  
             row["skill"],
             fontsize=8,
             alpha=0.8
@@ -300,21 +287,30 @@ def plot_individual_regressions(trend_df, skill_counts, jobs_per_period, periods
         plt.close()
 
 def plot_mae_scatter(trend_df):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
 
-    plt.scatter(range(len(trend_df)), trend_df["mae"], alpha=0.7)
+    x_values = range(len(trend_df))
+    y_values = trend_df["mae"]
+
+    plt.scatter(x_values, y_values, alpha=0.7)
+
+    for i, row in trend_df.iterrows():
+        plt.text(
+            i + 0.2,
+            row["mae"] + 0.1,
+            row["skill"],
+            fontsize=7,
+            alpha=0.75
+        )
 
     plt.title("MAE per Skill")
     plt.xlabel("Skill Index")
     plt.ylabel("MAE")
+
     plt.tight_layout()
-    plt.savefig("mae_scatter.png")
+    plt.savefig("mae_scatter_labeled.png")
     plt.close()
 
-
-# ===========================================
-# MAIN
-# ===========================================
 
 if __name__ == "__main__":
     df = pd.concat([load_data_one(), load_data_two(), load_data_three()], ignore_index=True)
